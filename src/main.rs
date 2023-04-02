@@ -1,9 +1,9 @@
-trait Info<'a> {
+trait Info {
     fn name(&self) -> &str;
 }
 
 trait InfoProvider<'a> {
-    type Info: Info<'a>;
+    type Info: Info + 'a;
     type InfoIterator : Iterator<Item = Self::Info>;
 
     fn info(&'a self) -> Self::Info;
@@ -18,7 +18,7 @@ struct ThingInfo<'a> {
     thing: &'a Thing,
 }
 
-impl<'a> Info<'a> for ThingInfo<'a> {
+impl Info for ThingInfo<'_> {
     fn name(&self) -> &str {
         &self.thing.name
     }
@@ -50,7 +50,7 @@ impl InfoProvider<'_> for UnassociatedThing {
         vec![self.info()].into_iter()
     }
 }
-impl Info<'_> for UnassociatedThingInfo {
+impl Info for UnassociatedThingInfo {
     fn name(&self) -> &str {
         "unassociated John"
     }
