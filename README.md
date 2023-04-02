@@ -1,0 +1,1 @@
+# rust_child_trait_lifetime
