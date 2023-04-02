@@ -2,12 +2,13 @@ trait Info {
     fn name(&self) -> &str;
 }
 
-trait InfoProvider<'a> {
-    type Info: Info + 'a;
-    type InfoIterator : Iterator<Item = Self::Info>;
-
-    fn info(&'a self) -> Self::Info;
-    fn infos(&'a self) -> Self::InfoIterator;
+trait InfoProvider {
+    type Item<'a>: Info + 'a
+    where
+        Self: 'a;
+    type InfoIterator<'a>: Iterator<Item = Self::Item<'a>> where Self: 'a;
+    fn info<'a>(&'a self) -> Self::Item<'a>;
+    fn infos<'a>(&'a self) -> Self::InfoIterator<'a>;
 }
 
 struct Thing {
@@ -24,14 +25,14 @@ impl Info for ThingInfo<'_> {
     }
 }
 
-impl<'a> InfoProvider<'a> for Thing {
-    type Info = ThingInfo<'a>;
-    type InfoIterator = std::vec::IntoIter<Self::Info>;
+impl InfoProvider for Thing {
+    type Item<'a> = ThingInfo<'a>;
+    type InfoIterator<'a> = std::vec::IntoIter<Self::Item<'a>>;
 
-    fn info(&'a self) -> Self::Info {
+    fn info<'a>(&'a self) -> Self::Item<'a> {
         ThingInfo { thing: self }
     }
-    fn infos(&'a self) -> Self::InfoIterator {
+    fn infos<'a>(&'a self) -> Self::InfoIterator<'a> {
         vec![self.info()].into_iter()
     }
 }
@@ -39,14 +40,14 @@ impl<'a> InfoProvider<'a> for Thing {
 struct UnassociatedThing;
 struct UnassociatedThingInfo;
 
-impl InfoProvider<'_> for UnassociatedThing {
-    type Info = UnassociatedThingInfo;
-    type InfoIterator = std::vec::IntoIter<Self::Info>;
+impl InfoProvider for UnassociatedThing {
+    type Item<'a> = UnassociatedThingInfo;
+    type InfoIterator<'a> = std::vec::IntoIter<Self::Item<'a>>;
 
-    fn info(&'_ self) -> Self::Info {
+    fn info(&self) -> Self::Item<'_> {
         UnassociatedThingInfo {}
     }
-    fn infos(&'_ self) -> Self::InfoIterator {
+    fn infos(&self) -> Self::InfoIterator<'_> {
         vec![self.info()].into_iter()
     }
 }
@@ -56,18 +57,21 @@ impl Info for UnassociatedThingInfo {
     }
 }
 
-fn generic_print<'a,T>(obj: &'a T) where T : InfoProvider<'a>
+fn generic_print<'a, T>(obj: &'a T)
+where
+    T: InfoProvider,
 {
     let info = obj.info();
-    println!("{}",info.name());
+    println!("{}", info.name());
 }
 
-fn generic_print_owned<T>(obj: T) where T : for <'a> InfoProvider<'a>
+fn generic_print_owned<T>(obj: T)
+where
+    T: for<'a> InfoProvider,
 {
     let info = obj.info();
-    println!("{}",info.name());
+    println!("{}", info.name());
 }
-
 
 fn main() {
     let obj = Thing {
@@ -84,9 +88,7 @@ fn main() {
     generic_print_owned(obj);
 
     // This works for unassociated
-    let info = {
-        UnassociatedThing{}.info()
-    };
+    let info = { UnassociatedThing {}.info() };
     println!("{}", info.name());
 
     // This shouldn't work for RealThing
