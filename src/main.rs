@@ -4,7 +4,10 @@ trait Info<'a> {
 
 trait InfoProvider<'a> {
     type Info: Info<'a>;
+    type InfoIterator : Iterator<Item = Self::Info>;
+
     fn info(&'a self) -> Self::Info;
+    fn infos(&'a self) -> Self::InfoIterator;
 }
 
 struct Thing {
@@ -23,9 +26,13 @@ impl<'a> Info<'a> for ThingInfo<'a> {
 
 impl<'a> InfoProvider<'a> for Thing {
     type Info = ThingInfo<'a>;
+    type InfoIterator = std::vec::IntoIter<Self::Info>;
 
     fn info(&'a self) -> Self::Info {
         ThingInfo { thing: self }
+    }
+    fn infos(&'a self) -> Self::InfoIterator {
+        vec![self.info()].into_iter()
     }
 }
 
@@ -34,9 +41,13 @@ struct UnassociatedThingInfo;
 
 impl InfoProvider<'_> for UnassociatedThing {
     type Info = UnassociatedThingInfo;
+    type InfoIterator = std::vec::IntoIter<Self::Info>;
 
     fn info(&'_ self) -> Self::Info {
         UnassociatedThingInfo {}
+    }
+    fn infos(&'_ self) -> Self::InfoIterator {
+        vec![self.info()].into_iter()
     }
 }
 impl Info<'_> for UnassociatedThingInfo {
