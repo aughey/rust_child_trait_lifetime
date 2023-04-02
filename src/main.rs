@@ -31,6 +31,7 @@ impl<'a> Parent<'a> for RealThing {
 
 struct UnassociatedThing;
 struct UnassociatedThingInfo;
+
 impl Parent<'_> for UnassociatedThing {
     type Info = UnassociatedThingInfo;
 
@@ -44,13 +45,13 @@ impl ParentInfo<'_> for UnassociatedThingInfo {
     }
 }
 
-fn generic_print<'a, T : Parent<'a>>(obj: &'a T)
+fn generic_print<'a,T>(obj: &'a T) where T : Parent<'a>
 {
     let info = obj.info();
     println!("{}",info.name());
 }
 
-fn generic_print_owned<'a, T : Parent<'a>>(obj: T)
+fn generic_print_owned<T>(obj: T) where T : for <'a> Parent<'a>
 {
     let info = obj.info();
     println!("{}",info.name());
@@ -69,6 +70,7 @@ fn main() {
     println!("{}", info.name());
 
     generic_print(&obj);
+    generic_print_owned(obj);
 
     // This works for unassociated
     let info = {
