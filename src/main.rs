@@ -2,7 +2,7 @@ trait Info<'a> {
     fn name(&self) -> &str;
 }
 
-trait HasInfo<'a> {
+trait InfoProvider<'a> {
     type Info: Info<'a>;
     fn info(&'a self) -> Self::Info;
 }
@@ -21,7 +21,7 @@ impl<'a> Info<'a> for ThingInfo<'a> {
     }
 }
 
-impl<'a> HasInfo<'a> for Thing {
+impl<'a> InfoProvider<'a> for Thing {
     type Info = ThingInfo<'a>;
 
     fn info(&'a self) -> Self::Info {
@@ -32,7 +32,7 @@ impl<'a> HasInfo<'a> for Thing {
 struct UnassociatedThing;
 struct UnassociatedThingInfo;
 
-impl HasInfo<'_> for UnassociatedThing {
+impl InfoProvider<'_> for UnassociatedThing {
     type Info = UnassociatedThingInfo;
 
     fn info(&'_ self) -> Self::Info {
@@ -45,13 +45,13 @@ impl Info<'_> for UnassociatedThingInfo {
     }
 }
 
-fn generic_print<'a,T>(obj: &'a T) where T : HasInfo<'a>
+fn generic_print<'a,T>(obj: &'a T) where T : InfoProvider<'a>
 {
     let info = obj.info();
     println!("{}",info.name());
 }
 
-fn generic_print_owned<T>(obj: T) where T : for <'a> HasInfo<'a>
+fn generic_print_owned<T>(obj: T) where T : for <'a> InfoProvider<'a>
 {
     let info = obj.info();
     println!("{}",info.name());
